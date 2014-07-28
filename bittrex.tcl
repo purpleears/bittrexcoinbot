@@ -1,13 +1,14 @@
-################################################################################
+##################################################################################################
 # Displays the last, high, low, volume, change from various exchanges and converts them to BTC/USD
-# Uses the official data API from Bitstamp and various exchanges (not a screen scraper)
+# Uses the official data API from Bitstamp, btc-e, and Bittrex (not a screen scraper)
 #
 # Requirements: TLS, JSON, TCL 8.5
 # Tested: Eggdrop 1.8.0+
 #
-# Instructions: Place bittrex.tcl in your eggdrop /scripts directory @ source it in eggdrop.conf (git clone https://github.com/kitaco/bittrexcoinbot.git)
+# Instructions: Place bittrex.tcl in your eggdrop /scripts directory @ source it in eggdrop.conf 
+# (git clone https://github.com/kitaco/bittrexcoinbot.git)
 # Usage: !bittrex <coin>
-################################################################################
+#################################################################################################
 
 package require Tcl 8.5
 package require http
