@@ -5,4 +5,4 @@ IRC Coin bot that grabs the Bittrex API, displays last/bid/ask/high/low, volume,
 
 Instructions: Place bittrex_main.tcl in your eggdrop /scripts directory & source it in eggdrop.conf (git clone https://github.com/kitaco/bittrexcoinbot.git)
 
-Usage: !p <coin>
+Usage: !p coin
