@@ -1,13 +1,12 @@
 ##################################################################################################
-# Displays the last, high, low, volume, change from various exchanges and converts them to BTC/USD
-# Uses the official data API from Bitstamp, btc-e, and Bittrex (not a screen scraper)
+# Displays Public API information from Bittrex.com
 #
 # Requirements: TLS, JSON, TCL 8.5
 # Tested: Eggdrop 1.8.0+
 #
-# Instructions: Place bittrex.tcl in your eggdrop /scripts directory @ source it in eggdrop.conf 
+# Instructions: Place bittrex_main.tcl in your eggdrop /scripts directory & source it in eggdrop.conf 
 # (git clone https://github.com/kitaco/bittrexcoinbot.git)
-# Usage: !bittrex <coin>
+# Usage: !p <coin>
 #################################################################################################
 
 package require Tcl 8.5
@@ -18,7 +17,7 @@ package require json
 http::register https 443 [list ::tls::socket -require 0 -request 1]
 
 proc s:wget { url } {
-   http::config -useragent "Mozilla/EggdropWget"
+   http::config -useragent "Mozilla/5.0 (Windows NT 6.3, Win64, x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/38.0.2114.2 Safari/537.36"
    catch {set token [http::geturl $url -binary 1 -timeout 10000]} error
    if {![string match -nocase "::http::*" $error]} {
       putserv "PRIVMSG $chan: Error: [string totitle [string map {"\n" " | "} $error]] \( $url \)"
@@ -57,19 +56,36 @@ proc s:wget { url } {
     return $data
 }
 
-bind pub - !bittrex bittrexprices
+bind pubm - "*!ico*" host_ico
+proc host_ico {nick uhost handle chan arg} {
+   putnow "PRIVMSG $chan :Hosting an ICO: https://bit.ly/1r4PIvP"
+}
+
+bind pubm - "*!ipo*" host_ipo
+proc host_ipo {nick uhost handle chan arg} {
+   putnow "PRIVMSG $chan :Hosting an ICO: https://bit.ly/1r4PIvP"
+}
+
+bind pubm - "*!submit*" submit_coin
+proc submit_coin {nick uhost handle chan arg} {
+   putnow "PRIVMSG $chan :Submitting A Coin: https://bit.ly/1tqiyc5"
+}
+
+bind pub - !p bittrexprices
 proc bittrexprices {nick uhand handle chan input} {
-    if {[llength $input]==0} {
-      putserv "PRIVMSG $chan :You must include a coin after !price"
-    } else {
-      set querybittrex "https://www.bittrex.com/api/v1.1/public/GetMarketSummary?market=btc-"
-      for { set index 0 } { $index<[llength $input] } { incr index } {
-        set querybittrex "$querybittrex[lindex $input $index]"
-        if {$index<[llength $input]-1} then {
-          set querybittrex "$querybittrex+"
-      }       
-    } 
-  }
+	  if {$input=="help"} {
+		putnow "PRIVMSG $chan :!p <coin> // Format: Last - Bid - Ask | High - Low  | 24hr Change | Spread | Vol - VolBTC | Averaged USD Last"
+        } if {[llength $input]==0} {
+		putnow "PRIVMSG $chan :You must include a coin after !p"
+	} else {
+		set querybittrex "https://www.bittrex.com/api/v1.1/public/GetMarketSummary?market=btc-"
+		for { set index 0 } { $index<[llength $input] } { incr index } {
+			set querybittrex "$querybittrex[lindex $input $index]"
+			if {$index<[llength $input]-1} then {
+				set querybittrex "$querybittrex+"
+			}
+		}
+	}
 
 # Bitstamp
 set bitstamphttp [s:wget https://www.bitstamp.net/api/ticker/ ]
@@ -107,6 +123,7 @@ set bittrexbtcvol [format "%.3f" $bittrexbtcvol]
 
 # % Change Maths
 set 24change [format "%.2f" [expr {(($bittrexlast - $bittrexprevday)/$bittrexlast) * 100}]] 
+set spread [format "%.2f" [expr {(100 / $bittrexlast) * ($bittrexask - $bittrexbid)}]]
 
 # % Change Colors
 proc color {change} {
@@ -122,9 +139,7 @@ proc color {change} {
  }
 
 # Output to channel
-if {$bittrexname ne "null"} {
   # Bittrex
   set colorchange [color $24change]
-  putnow "PRIVMSG $chan :\002$bittrexname\002 bittrex.com: \002Last:\002 $bittrexlast - \002Bid:\002 $bittrexbid - \002Ask:\002 $bittrexask - \002High:\002 $bittrexhigh - \002Low:\002 $bittrexlow // \002Vol:\002 $bittrexvol - \002VolBTC:\002 $bittrexbtcvol // \00224hr Change:\002$colorchange ${24change}%\003 // \002$bittrexname-USD\002 avg: \002Last:\002 $$bittrexusdlast - \002Bid:\002 $$bittrexusdbid - \002Ask:\002 $$bittrexusdask - \002High:\002 $$bittrexusdhigh - \002Low:\002 $$bittrexusdlow"
-}
+  putnow "PRIVMSG $chan :\002$bittrexname\002 bittrex.com: \00311L:\003 $bittrexlast - \00313B:\003 $bittrexbid - \00303A:\003 $bittrexask | \002H:\002 $bittrexhigh - \002L:\002 $bittrexlow | \002C:\002$colorchange ${24change}%\003 | \002S:\002 ${spread}% | \002V:\002 $bittrexvol - \002VBTC:\002 $bittrexbtcvol | \002USD\002 \00311L:\003 $$bittrexusdlast"
 }
